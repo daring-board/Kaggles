@@ -1,3 +1,5 @@
 *.csv
 *.model.*
 *.mat
+*.zip
+*.png
