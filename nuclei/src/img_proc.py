@@ -15,12 +15,14 @@ from itertools import chain
 from skimage.io import imread, imshow, imread_collection, concatenate_images
 from skimage.transform import resize
 from skimage.morphology import label
+from skimage.filters import gaussian
+from skimage import feature
 
 # Set some parameters
 IMG_WIDTH = 256
 IMG_HEIGHT = 256
 IMG_CHANNELS = 3
-TRAIN_PATH = './input/stage1_train/'
+TRAIN_PATH = '../input/stage1_train/'
 
 warnings.filterwarnings('ignore', category=UserWarning, module='skimage')
 seed = 42
@@ -35,7 +37,7 @@ X_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, IMG_CHANNELS), dtype=
 Y_train = np.zeros((len(train_ids), IMG_HEIGHT, IMG_WIDTH, 1), dtype=np.bool)
 print('Getting and resizing train images and masks ... ')
 sys.stdout.flush()
-for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
+for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids[:1])):
     path = TRAIN_PATH + id_
     img = imread(path + '/images/' + id_ + '.png')[:,:,:IMG_CHANNELS]
     img = resize(img, (IMG_HEIGHT, IMG_WIDTH), mode='constant', preserve_range=True)
@@ -48,7 +50,14 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids)):
         mask = np.maximum(mask, mask_)
     Y_train[n] = mask
 
-ix = random.randint(0, len(train_ids))
+ix = random.randint(0, len(train_ids[:1]))
+imshow(X_train[ix])
+plt.show()
+smooth = gaussian(X_train[ix], sigma=1)
+tmp = feature.canny(smooth, sigma=3)
+#tmp = X_train[ix] - smooth
+X_train[ix] = X_train[ix] + tmp
+print(X_train[ix].mean())
 imshow(X_train[ix])
 plt.show()
 imshow(np.squeeze(Y_train[ix]))
