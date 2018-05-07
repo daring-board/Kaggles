@@ -1,0 +1,7 @@
+*.csv
+*.model.*
+*.mat
+*.zip
+*.png
+*.h5
+*data*
