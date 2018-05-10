@@ -67,10 +67,11 @@ if __name__=="__main__":
     f_list.sort()
     print(f_list[:10])
 
-    model_file_name = "funiture_cnn.h5"
-    for iter  in range(3):
+    model_file_name = "funiture_org_cnn.h5"
+    warp = 5000
+    for iter  in range(1):
         datas, labels = [], []
-        for f in f_list[iter*500: (iter+1)*500]:
+        for f in f_list[iter*warp: (iter+1)*warp]:
             img = cv2.imread(base_path+f)
             img = cv2.resize(img, (128, 128))
             img = img.astype(np.float32) / 255.0
@@ -82,12 +83,12 @@ if __name__=="__main__":
         labels = pd.DataFrame(labels)
         n_class = labels.nunique().iat[0]
         print(labels.head(5))
-        labels = np_utils.to_categorical(labels, 128)
+        labels = np_utils.to_categorical(labels, 129)
         print(datas.shape[1:])
 
         if iter == 0:
             # モデル構築
-            cnn = CNN(datas, 128)
+            cnn = CNN(datas, 129)
             model = cnn.createNetwork()
             adam = Adam(lr=1e-4)
             model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
@@ -95,6 +96,6 @@ if __name__=="__main__":
         else:
             model = load_model(model_file_name)
         # fit model
-        model.fit(datas, labels, batch_size=50, epochs=20)
+        model.fit(datas, labels, batch_size=50, epochs=30)
         # save model
         model.save(model_file_name)
