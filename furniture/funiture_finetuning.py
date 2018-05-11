@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 import os
 import cv2
 import sys
@@ -10,10 +10,10 @@ import pandas as pd
 from keras.models import Sequential
 from keras.layers.convolutional import Conv2D
 from keras.layers.pooling import MaxPooling2D
-from keras.optimizers import Adam
+from keras.optimizers import Adam, SGD
 
 from keras.layers.core import Dense, Activation, Dropout, Flatten
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
 from keras.layers import Input
 
 from keras.utils import np_utils
@@ -21,6 +21,7 @@ from keras.models import load_model, Model
 from keras.applications.vgg16 import VGG16
 from keras.applications.densenet import DenseNet201
 from keras.applications.resnet50 import ResNet50
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
 from keras import optimizers
 
 class FineTuning:
@@ -33,16 +34,22 @@ class FineTuning:
         self.num_classes = num_classes
         self.shape = train_data.shape[1:]
         self.input_tensor = Input(shape=self.shape)
+        self.base_model = base_model
         if base_model == 'VGG16':
             self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
         elif base_model == 'DenseNet201':
             self.base = DenseNet201(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
         else:
-            self.base = ResNet50(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+            self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+            # self.base = ResNet50(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
 
     def getOptimizer(self):
-        # opt = optimizers.SGD(lr=0.001, momentum=0.9)
-        opt = Adam(lr=1e-4)
+        if self.base_model == 'VGG16':
+            opt = SGD(lr=1e-4, momentum=0.9)
+        elif self.base_model == 'DenseNet201':
+            opt = Adam(lr=1e-4)
+        else:
+            opt = Adam(lr=1e-4)
         return opt
 
 
@@ -82,7 +89,7 @@ if __name__=="__main__":
     print(f_list[:10])
 
     model_file_name = "funiture_cnn.h5"
-    warp = 5000
+    warp = 8000
     for iter  in range(1):
         datas, labels = [], []
         for f in f_list[iter*warp: (iter+1)*warp]:
@@ -109,7 +116,11 @@ if __name__=="__main__":
             model.summary()
         else:
             model = load_model(model_file_name)
+        callbacks = [
+            ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{val_loss:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='loss'),
+            EarlyStopping(monitor='loss', patience=0, verbose=0, mode='auto'),
+        ]
         # fit model
-        model.fit(datas, labels, batch_size=50, epochs=30)
+        model.fit(datas, labels, batch_size=50, epochs=30, callbacks=callbacks, validation_split=0.1)
         # save model
         model.save(model_file_name)

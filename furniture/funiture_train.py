@@ -96,6 +96,6 @@ if __name__=="__main__":
         else:
             model = load_model(model_file_name)
         # fit model
-        model.fit(datas, labels, batch_size=50, epochs=30)
+        model.fit(datas, labels, batch_size=10, epochs=30)
         # save model
         model.save(model_file_name)

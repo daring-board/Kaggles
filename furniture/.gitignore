@@ -4,4 +4,5 @@
 *.zip
 *.png
 *.h5
+*checkpoint*
 *data*
