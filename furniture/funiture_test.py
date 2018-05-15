@@ -32,11 +32,13 @@ if __name__=="__main__":
     f_list = os.listdir(base_path)
     f_list.sort()
 
-    model_file_name = "funiture_cnn.h5"
-#    for idx in range(250):
-        # f = random.choice(f_list)
     offset = 200
-    model = load_model(model_file_name)
+    # model.load_weights('checkpoints/weights.12-00.hdf5')
+    model_file_name = "funiture_cnn_resnet.h5"
+    model1 = load_model(model_file_name)
+    model_file_name = "funiture_cnn_vgg16_early.h5"
+    model2 = load_model(model_file_name)
+    model2.load_weights('checkpoints_vgg16_early/weights.12-00.hdf5')
     for itr in range(int(len(test_df.index)/offset)):
         start = time.time()
         datas, labels, files = [], [], []
@@ -51,10 +53,13 @@ if __name__=="__main__":
         datas = np.asarray(datas)
         if len(datas) == 0: break
 
-        pred_class = model.predict(datas)
+        pred_class1 = model1.predict(datas)
+        pred_class2 = model2.predict(datas)
+
         for idx in range(len(f_list[itr*offset: (itr+1)*offset])):
             num = int(f_list[idx+itr*offset][5:-4])
-            result[num] = np.argmax(pred_class, axis=1)[idx]
+            ems = pred_class1[idx] + pred_class2[idx]
+            result[num] = np.argmax(ems)
         elapse = time.time() - start
         print(elapse)
 
