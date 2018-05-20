@@ -92,38 +92,41 @@ if __name__=="__main__":
 
     model_file_name = "funiture_cnn.h5"
     datagen = ImageDataGenerator(horizontal_flip=True, zoom_range=0.5)
+
     warp = 9000
     aug_time = 2
+    n_epoch = 100
+    datas, labels = [], []
+
+    for f in random.sample(f_list, warp):
+        img = cv2.imread(base_path+f)
+        img = cv2.resize(img, (128, 128))
+        img = img.astype(np.float32) / 255.0
+        datas.append(img)
+        tmp_df = train_df[train_df.id == int(f[6:-4])]
+        labels.append(tmp_df['label'].iat[0])
+        # Augmentation image
+        # for num in range(aug_time):
+        #     tmp = datagen.random_transform(img)
+        #     datas.append(tmp)
+        #     labels.append(tmp_df['label'].iat[0])
+
+    datas = np.asarray(datas)
+    labels = pd.DataFrame(labels)
+    labels = np_utils.to_categorical(labels, 129)
+
     for iter in range(3):
-        datas, labels = [], []
-        for f in random.sample(f_list, warp):
-            img = cv2.imread(base_path+f)
-            img = cv2.resize(img, (128, 128))
-            img = img.astype(np.float32) / 255.0
-            datas.append(img)
-            tmp_df = train_df[train_df.id == int(f[6:-4])]
-            labels.append(tmp_df['label'].iat[0])
-            # Augmentation image
-            # for num in range(aug_time):
-            #     tmp = datagen.random_transform(img)
-            #     datas.append(tmp)
-            #     labels.append(tmp_df['label'].iat[0])
-
-        datas = np.asarray(datas)
-        labels = pd.DataFrame(labels)
-        # n_class = labels.nunique().iat[0]
-        # print(labels.head(5))
-        # print(datas.shape[1:])
-        labels = np_utils.to_categorical(labels, 129)
-        n_epoch = 100
-
+        # if iter == 0:
+        #     # モデル構築
+        #     ft = FineTuning(datas, 129, model)
+        #     model = ft.createNetwork()
+        #     opt = ft.getOptimizer()
+        #     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+        #     model.summary()
         if iter == 0:
-            # モデル構築
-            ft = FineTuning(datas, 129, model)
-            model = ft.createNetwork()
-            opt = ft.getOptimizer()
-            model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-            model.summary()
+            model = load_model(model_file_name)
+            wgt = './checkpoints_vgg16_early/weights.12-00.hdf5'
+            model.load_weights(wgt)
         else:
             model = load_model(model_file_name)
             for num in reversed(range(n_epoch)):

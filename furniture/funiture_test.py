@@ -38,7 +38,7 @@ if __name__=="__main__":
     model1 = load_model(model_file_name)
     model_file_name = "funiture_cnn_vgg16_early.h5"
     model2 = load_model(model_file_name)
-    model2.load_weights('checkpoints_vgg16_early/weights.12-00.hdf5')
+    model2.load_weights('checkpoints_vgg16_early/weights.07-00.hdf5')
     for itr in range(int(len(test_df.index)/offset)):
         start = time.time()
         datas, labels, files = [], [], []

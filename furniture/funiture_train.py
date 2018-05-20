@@ -3,6 +3,8 @@ import os
 import cv2
 import sys
 import json
+import datetime
+import random
 import requests
 import numpy as np
 import pandas as pd
@@ -13,7 +15,7 @@ from keras.layers.pooling import MaxPooling2D
 from keras.optimizers import Adam
 
 from keras.layers.core import Dense, Activation, Dropout, Flatten
-from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping
+from keras.callbacks import TensorBoard, ModelCheckpoint, EarlyStopping, ProgbarLogger, ReduceLROnPlateau, LambdaCallback
 
 from keras.utils import np_utils
 from keras.models import load_model
@@ -69,7 +71,7 @@ if __name__=="__main__":
     print(f_list[:10])
 
     model_file_name = "funiture_org_cnn.h5"
-    warp = 5000
+    warp = 4500
     for iter  in range(1):
         datas, labels = [], []
         for f in random.sample(f_list, warp):
@@ -85,20 +87,22 @@ if __name__=="__main__":
         datas = np.asarray(datas)
         labels = pd.DataFrame(labels)
         n_class = labels.nunique().iat[0]
-        print(labels.head(5))
         labels = np_utils.to_categorical(labels, 129)
-        print(datas.shape[1:])
+        n_epoch = 100
 
         if iter == 1:
             # モデル構築
             cnn = CNN(datas, 129)
             model = cnn.createNetwork()
-            adam = Adam(lr=1e-4)
+            adam = Adam(lr=1e-2)
             model.compile(optimizer=adam, loss='categorical_crossentropy', metrics=['accuracy'])
             model.summary()
         else:
             model = load_model(model_file_name)
-            model.load_weights('checkpoints/weights.08-0.44.hdf5')
+            for num in reversed(range(n_epoch)):
+                wgt = './checkpoints/weights.%02d-%02d.hdf5'%(num, iter)
+                if not os.path.isfile(wgt): continue
+                model.load_weights(wgt)
 
         callbacks = [
             ModelCheckpoint('./checkpoints/weights.{epoch:02d}-%02d.hdf5'%iter, verbose=1, save_weights_only=True, monitor='val_loss'),
@@ -106,9 +110,9 @@ if __name__=="__main__":
             ReduceLROnPlateau(factor=0.1, patience=1, verbose=1),
             LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
         ]
-        
+
         # fit model
-        hist = model.fit(datas, labels, batch_size=20, epochs=30, callbacks=callbacks, validation_split=0.1)
+        hist = model.fit(datas, labels, batch_size=20, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
         # save model
         model.save(model_file_name)
 

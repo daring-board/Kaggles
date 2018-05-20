@@ -31,7 +31,7 @@ if __name__=="__main__":
 
     datas, labels, files = [], [], []
     datagen = ImageDataGenerator(horizontal_flip=True, zoom_range=0.5)
-    aug_time = 2
+    aug_time = 4
     for idx in range(250):
         f = random.choice(f_list)
         img = cv2.imread(base_path+f)
@@ -65,7 +65,7 @@ if __name__=="__main__":
 
     model_file_name = "funiture_cnn_vgg16_early.h5"
     model = load_model(model_file_name)
-    model.load_weights('checkpoints_vgg16_early/weights.12-00.hdf5')
+    model.load_weights('checkpoints_vgg16_early/weights.07-00.hdf5')
     # evaluate model
     # score = model.evaluate(datas, labels, verbose=0)
     # print('test loss:', score[0])
@@ -73,19 +73,20 @@ if __name__=="__main__":
     pred_class2 = model.predict(datas)
 
     with open('validate.csv', 'w') as f:
-        for idx in range(0, len(datas), 3):
+        for idx in range(0, len(datas)+1, aug_time+1):
             f_name = files[idx]
             label = labels_org.iloc[idx, 0]
             # img = cv2.imread(f)
             # cv2.imshow(f[len(base_path)+6:-4], img)
             #print('%s: %d, %s'%(f_name, label, str(pred_class[idx][label])))
-            tta_val1 = (pred_class1[idx] + pred_class1[idx+1] + pred_class1[idx+2])/3
-            tta_val2 = (pred_class2[idx] + pred_class2[idx+1] + pred_class2[idx+2])/3
+            tta_val1 = np.sum(pred_class1[idx: idx+aug_time+1], axis=0) / aug_time+1
+            tta_val2 = np.sum(pred_class2[idx: idx+aug_time+1], axis=0) / aug_time+1
             ems = (pred_class1[idx] + pred_class2[idx])/2
             tta_ems = (tta_val1 + tta_val2)/2
+            all_ems = (ems + tta_ems)/2
             # f.write('%s: %d, %d, %s\n'%(f_name, label, np.argmax(pred_class[idx]), np.argmax(tta_val)))
             f.write('%s: %d, %d, %d, '%(f_name, label, np.argmax(pred_class1[idx]), np.argmax(pred_class2[idx])))
-            f.write('%d, %d\n'%(np.argmax(ems), np.argmax(tta_ems)))
+            f.write('%d, %d, %d\n'%(np.argmax(ems), np.argmax(tta_ems), np.argmax(all_ems)))
         # print(np.argmax(pred_class, axis=1))
 
     cv2.waitKey(0)
