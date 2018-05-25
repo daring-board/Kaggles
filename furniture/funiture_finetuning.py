@@ -93,7 +93,7 @@ if __name__=="__main__":
     model_file_name = "funiture_cnn.h5"
     datagen = ImageDataGenerator(horizontal_flip=True, zoom_range=0.5)
 
-    warp = 9000
+    warp = 10000
     aug_time = 2
     n_epoch = 100
     datas, labels = [], []
@@ -115,18 +115,18 @@ if __name__=="__main__":
     labels = pd.DataFrame(labels)
     labels = np_utils.to_categorical(labels, 129)
 
-    for iter in range(3):
-        # if iter == 0:
-        #     # モデル構築
-        #     ft = FineTuning(datas, 129, model)
-        #     model = ft.createNetwork()
-        #     opt = ft.getOptimizer()
-        #     model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
-        #     model.summary()
+    for iter in range(4):
         if iter == 0:
-            model = load_model(model_file_name)
-            wgt = './checkpoints_vgg16_early/weights.12-00.hdf5'
-            model.load_weights(wgt)
+            # モデル構築
+            ft = FineTuning(datas, 129, model)
+            model = ft.createNetwork()
+            opt = ft.getOptimizer()
+            model.compile(optimizer=opt, loss='categorical_crossentropy', metrics=['accuracy'])
+            model.summary()
+        # if iter == 0:
+        #     model = load_model(model_file_name)
+        #     wgt = './checkpoints_vgg16_early/weights.12-00.hdf5'
+        #     model.load_weights(wgt)
         else:
             model = load_model(model_file_name)
             for num in reversed(range(n_epoch)):
@@ -136,8 +136,8 @@ if __name__=="__main__":
 
         callbacks = [
             ModelCheckpoint('./checkpoints/weights.{epoch:02d}-%02d.hdf5'%iter, verbose=1, save_weights_only=True, monitor='val_loss'),
-            EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
-            ReduceLROnPlateau(factor=0.1, patience=1, verbose=1),
+            EarlyStopping(monitor='val_loss', min_delta=1e-8, patience=3, verbose=0, mode='auto'),
+            ReduceLROnPlateau(factor=0.05, patience=1, verbose=1),
             LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
         ]
 

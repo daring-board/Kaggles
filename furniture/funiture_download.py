@@ -23,7 +23,7 @@ train_df = pd.DataFrame(list(map(join_fn, zip(train['images'], train['annotation
 valid_df = pd.DataFrame(list(map(join_fn, zip(validation['images'], validation['annotations']))), columns=['id', 'url', 'label'])
 test_df  = pd.DataFrame(list(map(join_fn_test, test["images"])), columns=['id', 'url'])
 
-for idx, row in train_df.sample(n=1000).iterrows():
+for idx, row in train_df.sample(n=6000).iterrows():
 #for idx, row in test_df.iterrows():
     url = row['url']
     img_id = row['id']

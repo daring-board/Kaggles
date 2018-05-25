@@ -53,9 +53,11 @@ for n, id_ in tqdm(enumerate(train_ids), total=len(train_ids[:1])):
 ix = random.randint(0, len(train_ids[:1]))
 imshow(X_train[ix])
 plt.show()
-smooth = gaussian(X_train[ix], sigma=1)
-tmp = feature.canny(smooth, sigma=3)
-#tmp = X_train[ix] - smooth
+smooth = gaussian(X_train[ix], sigma=0.3)
+tmp = feature.canny(X_train[ix], sigma=3)
+imshow(tmp)
+plt.show()
+tmp = X_train[ix] - smooth
 X_train[ix] = X_train[ix] + tmp
 print(X_train[ix].mean())
 imshow(X_train[ix])

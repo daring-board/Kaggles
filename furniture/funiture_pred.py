@@ -55,8 +55,10 @@ if __name__=="__main__":
     n_class = labels_org.nunique().iat[0]
     labels = np_utils.to_categorical(labels_org, 129)
 
+    print(len(files)+1)
     model_file_name = "funiture_cnn_resnet.h5"
     model = load_model(model_file_name)
+    model.load_weights('checkpoints_resnet/weights.10-02.hdf5')
     # evaluate model
     # score = model.evaluate(datas, labels, verbose=0)
     # print('test loss:', score[0])
@@ -65,7 +67,7 @@ if __name__=="__main__":
 
     model_file_name = "funiture_cnn_vgg16_early.h5"
     model = load_model(model_file_name)
-    model.load_weights('checkpoints_vgg16_early/weights.07-00.hdf5')
+    model.load_weights('checkpoints_vgg16_early/weights.04-02.hdf5')
     # evaluate model
     # score = model.evaluate(datas, labels, verbose=0)
     # print('test loss:', score[0])
@@ -73,7 +75,7 @@ if __name__=="__main__":
     pred_class2 = model.predict(datas)
 
     with open('validate.csv', 'w') as f:
-        for idx in range(0, len(datas)+1, aug_time+1):
+        for idx in range(0, len(files), aug_time+1):
             f_name = files[idx]
             label = labels_org.iloc[idx, 0]
             # img = cv2.imread(f)
