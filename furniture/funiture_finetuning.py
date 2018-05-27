@@ -148,14 +148,16 @@ if __name__=="__main__":
 
     # fit model
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
-    train_gen = DataSequence('train', 40000, base_path)
-    validate_gen = DataSequence('validate', 4000, base_path)
+    step_size = 100
+    file_all = 50000
+    train_gen = DataSequence('train', file_all, base_path)
+    validate_gen = DataSequence('validate', 0.01*file_all, base_path)
     model.fit_generator(
         train_gen,
-        steps_per_epoch=400,
+        steps_per_epoch=file_all/step_size,
         epochs=20,
         validation_data=validate_gen,
-        validation_steps=40,
+        validation_steps=0.01*file_all/step_size,
         )
 
     # save model
