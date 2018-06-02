@@ -8,12 +8,65 @@ import requests
 import numpy as np
 import pandas as pd
 
-from keras.utils import np_utils
-from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator
+from keras.models import load_model, Model
+from keras.layers.core import Dense, Activation, Dropout, Flatten
+from keras.layers import Input
+from keras.applications.vgg16 import VGG16
+from keras.applications.densenet import DenseNet201
+from keras.applications.resnet50 import ResNet50
+from keras.applications.inception_resnet_v2 import InceptionResNetV2
+from keras.models import Sequential
+from keras.utils import np_utils, Sequence
+
 
 def join_fn(dat):
     return [dat[0]['image_id'], dat[0]['url'][0], dat[1]['label_id']]
+
+class FineTuning:
+    '''
+    CNNで学習を行う。(転移学習)
+    Avable base_model is
+        VGG16, DenseNet201, ResNet50
+    '''
+    def __init__(self, num_classes, base_model):
+        self.num_classes = num_classes
+        self.shape = (128, 128, 3)
+        self.input_tensor = Input(shape=self.shape)
+        self.base_model = base_model
+        if base_model == 'VGG16':
+            self.base = VGG16(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        elif base_model == 'DenseNet201':
+            self.base = DenseNet201(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+        else:
+            self.base = InceptionResNetV2(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+            # self.base = ResNet50(include_top=False, weights='imagenet', input_tensor=self.input_tensor)
+
+    def getOptimizer(self):
+        if self.base_model == 'VGG16':
+            # opt = SGD(lr=1e-4, momentum=0.9)
+            opt = Adam(lr=1e-4)
+        elif self.base_model == 'DenseNet201':
+            opt = Adam(lr=1e-4)
+        else:
+            opt = Adam(lr=1e-4)
+        return opt
+
+    '''
+    Networkを定義する
+    '''
+    def createNetwork(self):
+        tmp_model = Sequential()
+        tmp_model.add(Flatten(input_shape=self.base.output_shape[1:]))
+        tmp_model.add(Dense(256, activation='relu'))
+        tmp_model.add(Dropout(0.5))
+        tmp_model.add(Dense(self.num_classes, activation='softmax'))
+
+        model = Model(input=self.base.input, output=tmp_model(self.base.output))
+        for layer in model.layers[:15]:
+            layer.trainable = False
+        return model
+
 
 if __name__=="__main__":
     train      = json.load(open("./data/train.json"))
@@ -56,22 +109,15 @@ if __name__=="__main__":
     labels = np_utils.to_categorical(labels_org, 129)
 
     print(len(files)+1)
-    model_file_name = "funiture_cnn_resnet.h5"
-    model = load_model(model_file_name)
-    model.load_weights('checkpoints_resnet/weights.10-02.hdf5')
-    # evaluate model
-    # score = model.evaluate(datas, labels, verbose=0)
-    # print('test loss:', score[0])
-    # print('test acc:', score[1])
+    model_file_name = "funiture_cnn.h5"
+    ft = FineTuning(129, 'ResNet')
+    model = ft.createNetwork()
+    model.load_weights('checkpoints/weights.10-0.09-0.98-0.88-0.84.hdf5')
     pred_class1 = model.predict(datas)
 
-    model_file_name = "funiture_cnn_vgg16_early.h5"
-    model = load_model(model_file_name)
-    model.load_weights('checkpoints_vgg16_early/weights.04-02.hdf5')
-    # evaluate model
-    # score = model.evaluate(datas, labels, verbose=0)
-    # print('test loss:', score[0])
-    # print('test acc:', score[1])
+    ft = FineTuning(129, 'VGG16')
+    model = ft.createNetwork()
+    model.load_weights('checkpoints/weights_vgg16.hdf5')
     pred_class2 = model.predict(datas)
 
     with open('validate.csv', 'w') as f:

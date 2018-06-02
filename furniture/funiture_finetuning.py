@@ -47,7 +47,7 @@ class FineTuning:
 
     def getOptimizer(self):
         if self.base_model == 'VGG16':
-            #opt = SGD(lr=1e-4, momentum=0.9)
+            # opt = SGD(lr=1e-4, momentum=0.9)
             opt = Adam(lr=1e-4)
         elif self.base_model == 'DenseNet201':
             opt = Adam(lr=1e-4)
@@ -84,7 +84,7 @@ class DataSequence(Sequence):
         f_list = os.listdir(self.data_file_path)
         f_list.sort()
 
-        warp = 100
+        warp = 50
         aug_time = 2
         datas, labels = [], []
 
@@ -140,7 +140,7 @@ if __name__=="__main__":
     model.summary()
 
     callbacks = [
-        ModelCheckpoint('./checkpoints/weights.%02d.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
+        ModelCheckpoint('./checkpoints/weights.{epoch:02d}-{loss:.2f}-{acc:.2f}-{val_loss:.2f}-{val_acc:.2f}.hdf5', verbose=1, save_weights_only=True, monitor='val_loss'),
         EarlyStopping(monitor='val_loss', patience=3, verbose=0, mode='auto'),
         ReduceLROnPlateau(factor=0.1, patience=1, verbose=1, cooldown=5, min_lr=1e-10),
         LambdaCallback(on_batch_begin=lambda batch, logs: print(' now: ',   datetime.datetime.now()))
@@ -148,16 +148,17 @@ if __name__=="__main__":
 
     # fit model
     # model.fit(datas, labels, batch_size=50, epochs=n_epoch, callbacks=callbacks, validation_split=0.1)
-    step_size = 100
-    file_all = 50000
+    step_size = 50
+    file_all = 60000
     train_gen = DataSequence('train', file_all, base_path)
-    validate_gen = DataSequence('validate', 0.01*file_all, base_path)
+    validate_gen = DataSequence('validate', int(0.01*file_all), base_path)
     model.fit_generator(
         train_gen,
-        steps_per_epoch=file_all/step_size,
+        steps_per_epoch=int(file_all/step_size),
         epochs=20,
         validation_data=validate_gen,
-        validation_steps=0.01*file_all/step_size,
+        validation_steps=int(0.01*file_all/step_size),
+        callbacks=callbacks
         )
 
     # save model
