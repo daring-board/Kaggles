@@ -17,9 +17,9 @@ from sklearn.feature_selection import VarianceThreshold
 print('Importing data...')
 data = pd.read_csv('./input/application_train.csv')
 test = pd.read_csv('./input/application_test.csv')
-prev = pd.read_csv('./input/previous_application.csv')
-buro = pd.read_csv('./input/bureau.csv')
-buro_balance = pd.read_csv('./input/bureau_balance.csv')
+# prev = pd.read_csv('./input/previous_application.csv')
+# buro = pd.read_csv('./input/bureau.csv')
+# buro_balance = pd.read_csv('./input/bureau_balance.csv')
 credit_card  = pd.read_csv('./input/credit_card_balance.csv')
 POS_CASH  = pd.read_csv('./input/POS_CASH_balance.csv')
 payments = pd.read_csv('./input/installments_payments.csv')
@@ -41,39 +41,39 @@ one_hot_df = pd.get_dummies(one_hot_df, columns=categorical_features)
 data = one_hot_df.iloc[:data.shape[0],:]
 test = one_hot_df.iloc[data.shape[0]:,]
 
-#Pre-processing buro_balance
-print('Pre-processing buro_balance...')
-buro_grouped_size = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].size()
-buro_grouped_max = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].max()
-buro_grouped_min = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].min()
-
-buro_counts = buro_balance.groupby('SK_ID_BUREAU')['STATUS'].value_counts(normalize = False)
-buro_counts_unstacked = buro_counts.unstack('STATUS')
-buro_counts_unstacked.columns = ['STATUS_0', 'STATUS_1','STATUS_2','STATUS_3','STATUS_4','STATUS_5','STATUS_C','STATUS_X',]
-buro_counts_unstacked['MONTHS_COUNT'] = buro_grouped_size
-buro_counts_unstacked['MONTHS_MIN'] = buro_grouped_min
-buro_counts_unstacked['MONTHS_MAX'] = buro_grouped_max
-
-buro = buro.join(buro_counts_unstacked, how='left', on='SK_ID_BUREAU')
-
-#Pre-processing previous_application
-print('Pre-processing previous_application...')
-#One-hot encoding of categorical features in previous application data set
-prev_cat_features = [pcol for pcol in prev.columns if prev[pcol].dtype == 'object']
-prev = pd.get_dummies(prev, columns=prev_cat_features)
-avg_prev = prev.groupby('SK_ID_CURR').mean()
-cnt_prev = prev[['SK_ID_CURR', 'SK_ID_PREV']].groupby('SK_ID_CURR').count()
-avg_prev['nb_app'] = cnt_prev['SK_ID_PREV']
-del avg_prev['SK_ID_PREV']
-
-#Pre-processing buro
-print('Pre-processing buro...')
-#One-hot encoding of categorical features in buro data set
-buro_cat_features = [bcol for bcol in buro.columns if buro[bcol].dtype == 'object']
-buro = pd.get_dummies(buro, columns=buro_cat_features)
-avg_buro = buro.groupby('SK_ID_CURR').mean()
-avg_buro['buro_count'] = buro[['SK_ID_BUREAU', 'SK_ID_CURR']].groupby('SK_ID_CURR').count()['SK_ID_BUREAU']
-del avg_buro['SK_ID_BUREAU']
+# #Pre-processing buro_balance
+# print('Pre-processing buro_balance...')
+# buro_grouped_size = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].size()
+# buro_grouped_max = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].max()
+# buro_grouped_min = buro_balance.groupby('SK_ID_BUREAU')['MONTHS_BALANCE'].min()
+#
+# buro_counts = buro_balance.groupby('SK_ID_BUREAU')['STATUS'].value_counts(normalize = False)
+# buro_counts_unstacked = buro_counts.unstack('STATUS')
+# buro_counts_unstacked.columns = ['STATUS_0', 'STATUS_1','STATUS_2','STATUS_3','STATUS_4','STATUS_5','STATUS_C','STATUS_X',]
+# buro_counts_unstacked['MONTHS_COUNT'] = buro_grouped_size
+# buro_counts_unstacked['MONTHS_MIN'] = buro_grouped_min
+# buro_counts_unstacked['MONTHS_MAX'] = buro_grouped_max
+#
+# buro = buro.join(buro_counts_unstacked, how='left', on='SK_ID_BUREAU')
+#
+# #Pre-processing previous_application
+# print('Pre-processing previous_application...')
+# #One-hot encoding of categorical features in previous application data set
+# prev_cat_features = [pcol for pcol in prev.columns if prev[pcol].dtype == 'object']
+# prev = pd.get_dummies(prev, columns=prev_cat_features)
+# avg_prev = prev.groupby('SK_ID_CURR').mean()
+# cnt_prev = prev[['SK_ID_CURR', 'SK_ID_PREV']].groupby('SK_ID_CURR').count()
+# avg_prev['nb_app'] = cnt_prev['SK_ID_PREV']
+# del avg_prev['SK_ID_PREV']
+#
+# #Pre-processing buro
+# print('Pre-processing buro...')
+# #One-hot encoding of categorical features in buro data set
+# buro_cat_features = [bcol for bcol in buro.columns if buro[bcol].dtype == 'object']
+# buro = pd.get_dummies(buro, columns=buro_cat_features)
+# avg_buro = buro.groupby('SK_ID_CURR').mean()
+# avg_buro['buro_count'] = buro[['SK_ID_BUREAU', 'SK_ID_CURR']].groupby('SK_ID_CURR').count()['SK_ID_BUREAU']
+# del avg_buro['SK_ID_BUREAU']
 
 #Pre-processing POS_CASH
 print('Pre-processing POS_CASH...')
@@ -100,14 +100,14 @@ avg_payments = payments.groupby('SK_ID_CURR').mean()
 avg_payments2 = payments.groupby('SK_ID_CURR').max()
 avg_payments3 = payments.groupby('SK_ID_CURR').min()
 del avg_payments['SK_ID_PREV']
-
-#Join data bases
-print('Joining databases...')
-data = data.merge(right=avg_prev.reset_index(), how='left', on='SK_ID_CURR')
-test = test.merge(right=avg_prev.reset_index(), how='left', on='SK_ID_CURR')
-
-data = data.merge(right=avg_buro.reset_index(), how='left', on='SK_ID_CURR')
-test = test.merge(right=avg_buro.reset_index(), how='left', on='SK_ID_CURR')
+#
+# #Join data bases
+# print('Joining databases...')
+# data = data.merge(right=avg_prev.reset_index(), how='left', on='SK_ID_CURR')
+# test = test.merge(right=avg_prev.reset_index(), how='left', on='SK_ID_CURR')
+#
+# data = data.merge(right=avg_buro.reset_index(), how='left', on='SK_ID_CURR')
+# test = test.merge(right=avg_buro.reset_index(), how='left', on='SK_ID_CURR')
 
 data = data.merge(POS_CASH.groupby('SK_ID_CURR').mean().reset_index(), how='left', on='SK_ID_CURR')
 test = test.merge(POS_CASH.groupby('SK_ID_CURR').mean().reset_index(), how='left', on='SK_ID_CURR')
@@ -144,16 +144,14 @@ for n_fold, (trn_idx, val_idx) in enumerate(folds.split(data)):
         objective = 'binary:logistic',
         booster = "gbtree",
         eval_metric = 'auc',
-        nthread = 8,
-        eta = 0.025,
+        n_estimators=200,
+        nthread = 7,
+        eta = 0.05,
         gamma = 0,
         max_depth = 6,
         subsample = 0.8,
-        colsample_bytree = 0.632,
-        colsample_bylevel = 0.8,
-        min_child_weight = 19,
+        min_child_weight = 15,
         alpha = 0,
-        random_state = 42,
         nrounds = 8000
     )
 
@@ -170,4 +168,4 @@ print('Full AUC score %.6f' % roc_auc_score(y, oof_preds))
 
 test['TARGET'] = sub_preds
 
-test[['SK_ID_CURR', 'TARGET']].to_csv('xgb_submission_772.csv', index=False, float_format='%.8f')
+test[['SK_ID_CURR', 'TARGET']].to_csv('xgb_submission_.csv', index=False, float_format='%.8f')
